@@ -4,6 +4,7 @@ from zippyshare_downloader import extract_info, extract_info_coro
 from bs4 import BeautifulSoup
 import requests
 from pprint import pprint
+import enquiries
 
 
 SESSION = requests.Session()
@@ -21,26 +22,30 @@ def search_anime(query):
     else:
         print('Connection Error')
         return 1
-    return query_result
+    anime_dict = {}
+    for anime in query_result:
+        anime_dict[anime['title']] = {
+            'title': anime['title'],
+            'image': anime['image'],
+            'type': anime['type'],
+            'link': f"https://jkanime.net/{anime['slug']}/",
+            'ep': get_ep_num(f"https://jkanime.net/{anime['slug']}/")
+        }
+    return anime_dict
 
 
-def select_anime(anime_list):
+def select_anime(anime_dict):
     """
     Prints list of anime names and ask you to select one.
     """
-    for i in range(len(anime_list)):
-        print(f'{i+1}. {anime_list[i]["title"]}')
-
-    number = input(f'Elige un anime[1/{len(anime_list)}]: ')
-    number = int(number)
-    return anime_list[number-1]
+    choice = enquiries.choose('Selecciona un anime: ', anime_dict.keys())
+    return anime_dict[choice]
 
 
-def get_ep_num(anime_slug):
+def get_ep_num(anime_url):
     """
     Returns the number of episodes of an anime.
     """
-    anime_url = f'https://jkanime.net/{anime_slug}'
     response = SESSION.get(anime_url, headers=HEADERS)
     soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -50,25 +55,26 @@ def get_ep_num(anime_slug):
 
 
 def select_ep(anime):
-    ep_num = get_ep_num(anime['slug'])
-    print(f'\n{anime["title"]} ({ep_num})')
+    """
+    Asks you to select one episode
+    """
+    ep_num = get_ep_num(anime['link'])
+    print(f'\n{anime["title"]} ({anime["ep"]})')
     while True:
         try:
             ep = int(input('Elige un episodio: '))
         except Exception as e:
-            print("Tienes que escribir un number")
+            print("Tienes que escribir un número")
             continue
         else:
             break
-    print()
-    return ep
+    return str(ep)
 
 
-def get_link(anime_slug, ep):
+def get_link(url):
     """
     Returns the Zippyshare download link of an specific episode.
     """
-    url = f'https://jkanime.net/{anime_slug}/{ep}/'
     response = SESSION.get(url, headers=HEADERS)
     soup = BeautifulSoup(response.content, 'html.parser')
     for link in soup.findAll('a'):
@@ -79,18 +85,22 @@ def get_link(anime_slug, ep):
 def main():
     # Search for anime
     query = input('Buscar Anime: ')
-    anime_list = search_anime(query)
-    anime = select_anime(anime_list)
+    anime_dict = search_anime(query)
+    anime = select_anime(anime_dict)
+
     # Select episode
     ep = select_ep(anime)
-    # Print link
-    link = get_link(anime['slug'], ep)
+
+    # Get download link
+    url = anime['link'] + ep
+    link = get_link(url)
     if link is None:
-        print('Enlace de descarga no disponible')
+        print('Noy hay un enlace de descarga no disponible')
     elif 'zippyshare' in link:
         extract_info(link)
     else:
-        print('El enlace no es de Zippyshare')
+        print('El enlace no es de Zippyshare. Descargalo en tu navegador')
+        print(link)
 
 
 if __name__ == '__main__':
