@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from zippyshare_downloader import extract_info, extract_info_coro
+from zippyshare_downloader import extract_info
 from bs4 import BeautifulSoup
 import requests
 import enquiries
@@ -29,7 +29,7 @@ def search_anime(query):
     else:
         print('Error de conección')
         exit()
-        
+
     anime_dict = {}
     for anime in query_result:
         anime_dict[anime['title']] = {
@@ -67,7 +67,7 @@ def select_ep(anime):
     Asks you to select one episode
     """
     ep_num = get_ep_num(anime['link'])
-    print(f'\n{anime["title"]} ({anime["ep"]})')
+    print(f'{anime["title"]} ({anime["ep"]})')
     while True:
         try:
             ep = int(input('Elige un episodio: '))
@@ -109,22 +109,21 @@ def main():
         print('Noy hay un enlace de descarga no disponible')
         exit()
     elif len(links) > 1:
-        link = enquiries.choose('Selecciona un enlace.\
-                                Solo Zippyshare esta\
-                                disponible para descarga.',
-                                links)
+        print('Nota: Solo Zippyshare esta disponible para descarga.')
+        link = enquiries.choose('Selecciona un enlace', links)
     elif len(links) == 1:
         link = links[0]
 
-    if enquiries.confirm('¿Quieres descargar el episodio?'):
-        if 'zippyshare' in link:
+    if 'zippyshare' not in link:
+        print('El enlace no es de Zippyshare. Descargalo en tu navegador')
+        print(link)
+
+    else:
+        if enquiries.confirm('¿Quieres descargar el episodio?'):
             try:
                 extract_info(link)
             except Exception as e:
                 raise
-        else:
-            print('El enlace no es de Zippyshare. Descargalo en tu navegador')
-            print(link)
 
 
 if __name__ == '__main__':
