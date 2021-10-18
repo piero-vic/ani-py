@@ -3,7 +3,6 @@
 from zippyshare_downloader import extract_info, extract_info_coro
 from bs4 import BeautifulSoup
 import requests
-from pprint import pprint
 import enquiries
 
 
@@ -16,12 +15,21 @@ def search_anime(query):
     Returns the first 5 dictionaries on a list of matches.
     """
     query_url = f'https://jkanime.net/ajax/ajax_search/?q={query}'
-    response = SESSION.get(query_url, headers=HEADERS)
+    try:
+        response = SESSION.get(query_url, headers=HEADERS)
+    except Exception as e:
+        print('Error de conección')
+        exit()
+
     if response.status_code == 200:
         query_result = response.json()['animes']
+        if not query_result:
+            print('No se encuentraron resultados')
+            exit()
     else:
-        print('Connection Error')
-        return 1
+        print('Error de conección')
+        exit()
+        
     anime_dict = {}
     for anime in query_result:
         anime_dict[anime['title']] = {
@@ -71,15 +79,17 @@ def select_ep(anime):
     return str(ep)
 
 
-def get_link(url):
+def get_links(url):
     """
     Returns the Zippyshare download link of an specific episode.
     """
     response = SESSION.get(url, headers=HEADERS)
     soup = BeautifulSoup(response.content, 'html.parser')
+    links = []
     for link in soup.findAll('a'):
         if link.parent.name == 'td':
-            return link["href"]
+            links.append(link["href"])
+    return links
 
 
 def main():
@@ -93,14 +103,28 @@ def main():
 
     # Get download link
     url = anime['link'] + ep
-    link = get_link(url)
-    if link is None:
+    links = get_links(url)
+
+    if not links:
         print('Noy hay un enlace de descarga no disponible')
-    elif 'zippyshare' in link:
-        extract_info(link)
-    else:
-        print('El enlace no es de Zippyshare. Descargalo en tu navegador')
-        print(link)
+        exit()
+    elif len(links) > 1:
+        link = enquiries.choose('Selecciona un enlace.\
+                                Solo Zippyshare esta\
+                                disponible para descarga.',
+                                links)
+    elif len(links) == 1:
+        link = links[0]
+
+    if enquiries.confirm('¿Quieres descargar el episodio?'):
+        if 'zippyshare' in link:
+            try:
+                extract_info(link)
+            except Exception as e:
+                raise
+        else:
+            print('El enlace no es de Zippyshare. Descargalo en tu navegador')
+            print(link)
 
 
 if __name__ == '__main__':
