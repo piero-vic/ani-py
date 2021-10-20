@@ -10,36 +10,92 @@ SESSION = requests.Session()
 HEADERS = {'user-agent': 'Mozilla/5.0'}
 
 
-def search_anime(query):
-    """
-    Returns the first 5 dictionaries on a list of matches.
-    """
-    query_url = f'https://jkanime.net/ajax/ajax_search/?q={query}'
-    try:
-        response = SESSION.get(query_url, headers=HEADERS)
-    except Exception as e:
-        print('Error de conección')
-        exit()
+class Jkanime():
+    """Jkanime site"""
 
-    if response.status_code == 200:
-        query_result = response.json()['animes']
+    id = 'jkanime'
+    name = 'JKanime'
+    lang = 'es'
+
+    base_url = 'https://jkanime.net/'
+    ajax_search_url = 'https://jkanime.net/ajax/ajax_search/?q='
+    search_url = base_url + 'buscar/'
+    anime_url = base_url + '{0}/'
+    episode_url = anime_url + '{1}/'
+
+    session = requests.Session()
+    headers = {'user-agent': 'Mozilla/5.0'}
+
+    def session_get(self, *args, **kwargs):
+        """
+        Initialize requests session
+        """
+        try:
+            r = self.session.get(*args, **kwargs)
+        except Exception:
+            raise
+
+        return r
+
+    def search_anime(self, query):
+        """
+        Returns the first 5 matches on a list of dictionaries.
+        """
+        self.query_url = self.ajax_search_url + query
+
+        r = self.session_get(self.query_url, headers=self.headers)
+
+        if r.status_code != 200:
+            print('Error de conección')
+            exit()
+
+        query_result = r.json()['animes']
+
         if not query_result:
             print('No se encuentraron resultados')
             exit()
-    else:
-        print('Error de conección')
-        exit()
 
-    anime_dict = {}
-    for anime in query_result:
-        anime_dict[anime['title']] = {
-            'title': anime['title'],
-            'image': anime['image'],
-            'type': anime['type'],
-            'link': f"https://jkanime.net/{anime['slug']}/",
-            'ep': get_ep_num(f"https://jkanime.net/{anime['slug']}/")
-        }
-    return anime_dict
+        anime_dict = {}
+        for anime in query_result:
+            anime_dict[anime['title']] = {
+                'title': anime['title'],
+                'image': anime['image'],
+                'type': anime['type'],
+                'slug': anime['slug'],
+                'link': self.anime_url.format(anime['slug']),
+                'ep': self.get_ep_num(anime['slug'])
+            }
+        return anime_dict
+
+    def get_ep_num(self, anime_slug):
+        """
+        Returns the number of episodes of an anime.
+        """
+        r = self.session_get(
+            self.anime_url.format(anime_slug), headers=self.headers
+        )
+
+        soup = BeautifulSoup(r.content, 'html.parser')
+        details_container = soup.find(
+            'div', {'class': 'anime__details__widget'}
+        )
+        details = details_container.findChildren('li')
+        return details[3].contents[1].strip()
+
+    def get_download_links(self, anime_slug, ep):
+        """
+        Returns download link of an specific episode.
+        """
+        r = self.session_get(
+            self.episode_url.format(anime_slug, ep),
+            headers=self.headers
+        )
+        soup = BeautifulSoup(r.content, 'html.parser')
+        links = []
+        for link in soup.findAll('a'):
+            if link.parent.name == 'td':
+                links.append(link["href"])
+        return links
 
 
 def select_anime(anime_dict):
@@ -50,23 +106,11 @@ def select_anime(anime_dict):
     return anime_dict[choice]
 
 
-def get_ep_num(anime_url):
-    """
-    Returns the number of episodes of an anime.
-    """
-    response = SESSION.get(anime_url, headers=HEADERS)
-    soup = BeautifulSoup(response.content, 'html.parser')
-
-    details_container = soup.find('div', {'class': 'anime__details__widget'})
-    details = details_container.findChildren('li')
-    return details[3].contents[1].strip()
-
-
 def select_ep(anime):
     """
     Asks you to select one episode
     """
-    ep_num = get_ep_num(anime['link'])
+    ep_num = Jkanime().get_ep_num(anime['slug'])
     print(f'{anime["title"]} ({anime["ep"]})')
     while True:
         try:
@@ -79,31 +123,17 @@ def select_ep(anime):
     return str(ep)
 
 
-def get_links(url):
-    """
-    Returns the Zippyshare download link of an specific episode.
-    """
-    response = SESSION.get(url, headers=HEADERS)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    links = []
-    for link in soup.findAll('a'):
-        if link.parent.name == 'td':
-            links.append(link["href"])
-    return links
-
-
 def main():
     # Search for anime
     query = input('Buscar Anime: ')
-    anime_dict = search_anime(query)
+    anime_dict = Jkanime().search_anime(query)
     anime = select_anime(anime_dict)
 
     # Select episode
     ep = select_ep(anime)
 
     # Get download link
-    url = anime['link'] + ep
-    links = get_links(url)
+    links = Jkanime().get_download_links(anime['slug'], ep)
 
     if not links:
         print('Noy hay un enlace de descarga no disponible')
