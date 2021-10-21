@@ -31,37 +31,56 @@ def select_ep(anime):
     return str(ep)
 
 
-def main():
-    # Search for anime
-    query = input('Buscar Anime: ')
-    anime_dict = Jkanime().search_anime(query)
-    anime = select_anime(anime_dict)
-
-    # Select episode
-    ep = select_ep(anime)
-
-    # Get download link
-    links = Jkanime().get_download_links(anime['slug'], ep)
-
+def select_link(links):
+    """
+    Prints links and ask you to select one.
+    """
     if not links:
-        print('Noy hay un enlace de descarga no disponible')
+        print('No hay un enlace de descarga disponible')
         exit()
-    elif len(links) > 1:
-        print('Nota: Solo Zippyshare esta disponible para descarga.')
-        link = enquiries.choose('Selecciona un enlace', links)
     elif len(links) == 1:
-        link = links[0]
+        return links[0]
+    elif len(links) > 1:
+        return enquiries.choose(
+            ('Selecciona un enlace ' +
+             '(Solo Zippyshare esta disponible para descarga)'),
+            links
+        )
 
+
+def download(link):
+    """
+    Download the links. Print link if not available.
+    """
     if 'zippyshare' not in link:
         print('El enlace no es de Zippyshare. Descargalo en tu navegador')
         print(link)
-
     else:
         if enquiries.confirm('¿Quieres descargar el episodio?'):
             try:
                 extract_info(link)
             except Exception as e:
                 raise
+
+
+def main():
+    try:
+        # Search for anime
+        query = input('Buscar Anime: ')
+        anime_dict = Jkanime().search_anime(query)
+        anime = select_anime(anime_dict)
+
+        # Select episode
+        ep = select_ep(anime)
+
+        # Get download link
+        links = Jkanime().get_download_links(anime['slug'], ep)
+
+        # Select and download link
+        link = select_link(links)
+        download(link)
+    except KeyboardInterrupt:
+        return 1
 
 
 if __name__ == '__main__':
