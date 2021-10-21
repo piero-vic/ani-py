@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 from zippyshare_downloader import extract_info
-from bs4 import BeautifulSoup
-import requests
 import enquiries
 
-from jk_anime import Jkanime
+from servers import Jkanime
 
 
 def select_anime(anime_dict):

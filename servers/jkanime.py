@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-from zippyshare_downloader import extract_info
 from bs4 import BeautifulSoup
 import requests
-import enquiries
 
 
 SESSION = requests.Session()

@@ -1,0 +1,1 @@
+from .jkanime import Jkanime
