@@ -4,10 +4,6 @@ from bs4 import BeautifulSoup
 import requests
 
 
-SESSION = requests.Session()
-HEADERS = {'user-agent': 'Mozilla/5.0'}
-
-
 class Jkanime():
     """Jkanime site"""
 
