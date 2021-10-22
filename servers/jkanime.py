@@ -3,7 +3,7 @@
 from bs4 import BeautifulSoup
 import requests
 import re
-from pprint import pprint
+import subprocess
 
 
 class Jkanime():
@@ -103,3 +103,19 @@ class Jkanime():
         script = soup.findAll('script')[13].contents[0]
         embedded_links = re.findall('https.+?(?=")', script)
         return embedded_links
+
+    def get_video_link(self, url):
+        r = self.session_get(
+            url,
+            headers=self.headers
+        )
+
+        soup = BeautifulSoup(r.content, 'html.parser')
+        body = soup.find('body')
+        script = body.findAll('script')[1].contents[0]
+        embedded_links = re.findall("https.+?(?=')", script)
+        return embedded_links[0]
+
+    def open_video_player(self, url):
+        option = f"--http-header-fields='Referer: {self.base_url}'"
+        subprocess.run(['mpv', option, url])
