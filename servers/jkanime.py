@@ -2,6 +2,8 @@
 
 from bs4 import BeautifulSoup
 import requests
+import re
+from pprint import pprint
 
 
 class Jkanime():
@@ -90,3 +92,14 @@ class Jkanime():
             if link.parent.name == 'td':
                 links.append(link["href"])
         return links
+
+    def get_embedded_video_links(self, anime_slug, ep):
+        r = self.session_get(
+            self.episode_url.format(anime_slug, ep),
+            headers=self.headers
+        )
+
+        soup = BeautifulSoup(r.content, 'html.parser')
+        script = soup.findAll('script')[13].contents[0]
+        embedded_links = re.findall('https.+?(?=")', script)
+        return embedded_links
