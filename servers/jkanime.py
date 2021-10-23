@@ -5,7 +5,6 @@ import requests
 import re
 import subprocess
 
-
 class Jkanime():
     """Jkanime site"""
 
@@ -101,19 +100,21 @@ class Jkanime():
 
         soup = BeautifulSoup(r.content, 'html.parser')
         script = soup.findAll('script')[13].contents[0]
-        embedded_links = re.findall('https.+?(?=")', script)
+        embedded_links = re.findall('https://jkanime.net/.+?(?=")', script)
         return embedded_links
 
-    def get_video_link(self, url):
-        r = self.session_get(
-            url,
-            headers=self.headers
-        )
+    def select_embeded_link(self, links):
+        for link in links:
+            r = self.session_get(link, headers=self.headers)
+            if r.status_code == 200:
+                return r
 
+    def get_video_link(self, links):
+        r = self.select_embeded_link(links)
         soup = BeautifulSoup(r.content, 'html.parser')
-        body = soup.find('body')
+        body = soup.findAll('body')[0]
         script = body.findAll('script')[1].contents[0]
-        embedded_links = re.findall("https.+?(?=')", script)
+        embedded_links = re.findall("https://cloud1.+?(?=')", script)
         return embedded_links[0]
 
     def open_video_player(self, url):

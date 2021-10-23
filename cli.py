@@ -85,7 +85,7 @@ def main():
         else:
             # Get embedded video link
             links = Jkanime().get_embedded_video_links(anime['slug'], ep)
-            link = Jkanime().get_video_link(links[0])
+            link = Jkanime().get_video_link(links)
             Jkanime().open_video_player(link)
 
     except KeyboardInterrupt:
