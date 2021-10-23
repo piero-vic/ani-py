@@ -73,12 +73,21 @@ def main():
         # Select episode
         ep = select_ep(anime)
 
-        # Get download link
-        links = Jkanime().get_download_links(anime['slug'], ep)
+        mode = enquiries.choose('', ['Download', 'Stream'])
 
-        # Select and download link
-        link = select_link(links)
-        download(link)
+        if mode == 'Download':
+            # Get download link
+            links = Jkanime().get_download_links(anime['slug'], ep)
+
+            # Select and download link
+            link = select_link(links)
+            download(link)
+        else:
+            # Get embedded video link
+            links = Jkanime().get_embedded_video_links(anime['slug'], ep)
+            link = Jkanime().get_video_link(links[0])
+            Jkanime().open_video_player(link)
+
     except KeyboardInterrupt:
         return 1
 
