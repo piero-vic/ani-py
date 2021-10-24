@@ -103,7 +103,9 @@ def main(
     console.print(f'{anime_info["title"]}', style="good")
 
     # Select episode
-    if episode is None:
+    if anime_info['type'] == 'Movie':
+        episode = 'pelicula'
+    elif episode is None:
         episode = select_ep(anime_info)
 
     # Select mode
