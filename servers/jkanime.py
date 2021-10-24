@@ -98,9 +98,7 @@ class Jkanime():
             headers=self.headers
         )
 
-        soup = BeautifulSoup(r.content, 'html.parser')
-        script = soup.findAll('script')[13].contents[0]
-        embedded_links = re.findall('https://jkanime.net/.+?(?=")', script)
+        embedded_links = re.findall('https://jkanime.net/(?:jk|um).+?(?=")', r.text)
         return embedded_links
 
     def select_embeded_link(self, links):
@@ -111,8 +109,5 @@ class Jkanime():
 
     def get_video_link(self, links):
         r = self.select_embeded_link(links)
-        soup = BeautifulSoup(r.content, 'html.parser')
-        body = soup.findAll('body')[0]
-        script = body.findAll('script')[1].contents[0]
-        embedded_links = re.findall("https://cloud1.+?(?=')", script)
+        embedded_links = re.findall("https://cloud1.+?(?=')", r.text)
         return embedded_links[0]
