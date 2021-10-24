@@ -73,12 +73,10 @@ def download(link):
             except Exception as e:
                 raise
 
+
 def open_video_player(url):
     option = f"--http-header-fields='Referer: {Jkanime().base_url}'"
     subprocess.run(['mpv', option, url])
-
-
-app = typer.Typer(add_completion=False)
 
 
 def main(
@@ -125,8 +123,3 @@ def main(
         links = Jkanime().get_embedded_video_links(anime_info['slug'], episode)
         link = Jkanime().get_video_link(links)
         open_video_player(link)
-
-
-if __name__ == '__main__':
-    app.command()(main)
-    app()
