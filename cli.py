@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import typer
 from zippyshare_downloader import extract_info
 import enquiries
 
@@ -10,7 +11,7 @@ def select_anime(anime_dict):
     """
     Prints list of anime names and ask you to select one.
     """
-    choice = enquiries.choose('Selecciona un anime: ', anime_dict.keys())
+    choice = enquiries.choose('', anime_dict.keys())
     return anime_dict[choice]
 
 
@@ -19,16 +20,15 @@ def select_ep(anime):
     Asks you to select one episode
     """
     ep_num = Jkanime().get_ep_num(anime['slug'])
-    print(f'{anime["title"]} ({anime["ep"]})')
+    print(f'{anime["title"]}')
     while True:
         try:
-            ep = int(input('Elige un episodio: '))
+            ep = int(input(f'Elige un episodio ({anime["ep"]}): '))
         except Exception as e:
-            print("Tienes que escribir un número")
             continue
         else:
             break
-    return str(ep)
+    return ep
 
 
 def select_link(links):
@@ -63,34 +63,46 @@ def download(link):
                 raise
 
 
-def main():
-    try:
-        # Search for anime
-        query = input('Buscar Anime: ')
-        anime_dict = Jkanime().search_anime(query)
-        anime = select_anime(anime_dict)
+app = typer.Typer(add_completion=False)
 
-        # Select episode
-        ep = select_ep(anime)
 
+def main(
+    anime: str = typer.Argument(None),
+    episode: int = typer.Argument(None),
+    mode: bool = typer.Option(None,
+                              "--download/--stream", '-d/-s',
+                              help="Choose to download or stream.")
+):
+    # Search for anime
+    if anime is None:
+        anime = input('Buscar Anime: ')
+
+    anime_dict = Jkanime().search_anime(anime)
+    anime_info = select_anime(anime_dict)
+
+    # Select episode
+    if episode is None:
+        episode = select_ep(anime_info)
+
+    # Select mode
+    if mode is None:
         mode = enquiries.choose('', ['Download', 'Stream'])
 
-        if mode == 'Download':
-            # Get download link
-            links = Jkanime().get_download_links(anime['slug'], ep)
-
-            # Select and download link
-            link = select_link(links)
-            download(link)
-        else:
-            # Get embedded video link
-            links = Jkanime().get_embedded_video_links(anime['slug'], ep)
-            link = Jkanime().get_video_link(links)
-            Jkanime().open_video_player(link)
-
-    except KeyboardInterrupt:
-        return 1
+    # Download
+    if mode == 'Download' or mode is True:
+        # Get download link
+        links = Jkanime().get_download_links(anime_info['slug'], episode)
+        # Select and download link
+        link = select_link(links)
+        download(link)
+    # Stream
+    else:
+        # Get embedded video link
+        links = Jkanime().get_embedded_video_links(anime_info['slug'], episode)
+        link = Jkanime().get_video_link(links)
+        Jkanime().open_video_player(link)
 
 
 if __name__ == '__main__':
-    main()
+    app.command()(main)
+    app()
