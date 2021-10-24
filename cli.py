@@ -3,6 +3,7 @@
 import typer
 from zippyshare_downloader import extract_info
 import enquiries
+import subprocess
 from rich.console import Console
 from rich.theme import Theme
 
@@ -72,6 +73,10 @@ def download(link):
             except Exception as e:
                 raise
 
+def open_video_player(url):
+    option = f"--http-header-fields='Referer: {Jkanime().base_url}'"
+    subprocess.run(['mpv', option, url])
+
 
 app = typer.Typer(add_completion=False)
 
@@ -117,7 +122,7 @@ def main(
         # Get embedded video link
         links = Jkanime().get_embedded_video_links(anime_info['slug'], episode)
         link = Jkanime().get_video_link(links)
-        Jkanime().open_video_player(link)
+        open_video_player(link)
 
 
 if __name__ == '__main__':

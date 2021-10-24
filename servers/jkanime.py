@@ -3,7 +3,7 @@
 from bs4 import BeautifulSoup
 import requests
 import re
-import subprocess
+
 
 class Jkanime():
     """Jkanime site"""
@@ -116,7 +116,3 @@ class Jkanime():
         script = body.findAll('script')[1].contents[0]
         embedded_links = re.findall("https://cloud1.+?(?=')", script)
         return embedded_links[0]
-
-    def open_video_player(self, url):
-        option = f"--http-header-fields='Referer: {self.base_url}'"
-        subprocess.run(['mpv', option, url])
