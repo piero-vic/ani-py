@@ -13,7 +13,7 @@ class Jkanime():
     lang = 'es'
 
     base_url = 'https://jkanime.net/'
-    ajax_search_url = 'https://jkanime.net/ajax/ajax_search/?q='
+    ajax_search_url = 'https://jkanime.net/ajax/ajax_search/?q={0}'
     search_url = base_url + 'buscar/'
     anime_url = base_url + '{0}/'
     episode_url = anime_url + '{1}/'
@@ -36,9 +36,8 @@ class Jkanime():
         """
         Returns the first 5 matches on a list of dictionaries.
         """
-        self.query_url = self.ajax_search_url + query
-
-        r = self.session_get(self.query_url, headers=self.headers)
+        r = self.session_get(self.ajax_search_url.format(query),
+                             headers=self.headers)
 
         if r.status_code != 200:
             print('Error de conección')
@@ -54,10 +53,8 @@ class Jkanime():
         for anime in query_result:
             anime_dict[anime['title']] = {
                 'title': anime['title'],
-                'image': anime['image'],
                 'type': anime['type'],
                 'slug': anime['slug'],
-                'link': self.anime_url.format(anime['slug']),
                 'ep': self.get_ep_num(anime['slug'])
             }
         return anime_dict

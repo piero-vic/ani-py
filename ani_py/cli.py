@@ -7,7 +7,7 @@ import subprocess
 from rich.console import Console
 from rich.theme import Theme
 
-from servers import Jkanime
+from .servers import Jkanime
 
 
 custom_theme = Theme({
@@ -23,15 +23,17 @@ def select_anime(anime_dict):
     """
     Prints list of anime names and ask you to select one.
     """
-    choice = enquiries.choose('', anime_dict.keys())
-    return anime_dict[choice]
+    if len(anime_dict) == 1:
+        return list(anime_dict.values())[0]
+    else:
+        choice = enquiries.choose('', anime_dict.keys())
+        return anime_dict[choice]
 
 
 def select_ep(anime):
     """
     Asks you to select one episode
     """
-    ep_num = Jkanime().get_ep_num(anime['slug'])
     while True:
         try:
             ep = int(input(f'Elige un episodio ({anime["ep"]}): '))
@@ -76,7 +78,7 @@ def download(link):
 
 def open_video_player(url):
     option = f"--http-header-fields='Referer: {Jkanime().base_url}'"
-    subprocess.run(['mpv', option, url])
+    subprocess.run(['mpv', '--no-terminal', option, url])
 
 
 def main(
@@ -89,18 +91,11 @@ def main(
     # Search for anime
     if anime is None:
         anime = input('Buscar Anime: ')
-
     anime_dict = Jkanime().search_anime(anime)
-
-    if len(anime_dict) == 1:
-        anime_info = list(anime_dict.values())[0]
-    else:
-        anime_info = select_anime(anime_dict)
-
-    # Print anime title
-    console.print(f'{anime_info["title"]}', style="good")
+    anime_info = select_anime(anime_dict)
 
     # Select episode
+    console.print(f'{anime_info["title"]}', style="good")
     if anime_info['type'] == 'Movie':
         episode = 'pelicula'
     elif episode is None:
@@ -112,14 +107,17 @@ def main(
 
     # Download
     if mode == 'Download' or mode is True:
-        # Get download link
         links = Jkanime().get_download_links(anime_info['slug'], episode)
-        # Select and download link
         link = select_link(links)
         download(link)
     # Stream
     else:
-        # Get embedded video link
         links = Jkanime().get_embedded_video_links(anime_info['slug'], episode)
         link = Jkanime().get_video_link(links)
         open_video_player(link)
+
+    console.print('Gracias por usar ani-py :cherry_blossom:', style="bold")
+
+
+app = typer.Typer(add_completion=False)
+app.command()(main)
