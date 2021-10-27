@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "ani-py"
+version = "0.1.0"
+description = ""
+authors = []
+readme = "README.md"
+packages = [
+    { include = "ani_py" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+typer = "^0.4.0"
+rich = "^10.12.0"
+zippyshare-downloader = "^0.1.2"
+enquiries = "^0.1.0"
+
+[tool.poetry.scripts]
+ani-py = "ani_py.cli:app"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
