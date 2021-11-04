@@ -51,12 +51,7 @@ class Jkanime():
 
         anime_dict = {}
         for anime in query_result:
-            anime_dict[anime['title']] = {
-                'title': anime['title'],
-                'type': anime['type'],
-                'slug': anime['slug'],
-                'ep': self.get_ep_num(anime['slug'])
-            }
+            anime_dict[anime['title']] = anime
         return anime_dict
 
     def get_ep_num(self, anime_slug):
