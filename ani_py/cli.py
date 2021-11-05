@@ -34,10 +34,9 @@ def select_ep(anime):
     """
     Asks you to select one episode
     """
-    ep_num = Jkanime().get_ep_num(anime['slug'])
     while True:
         try:
-            ep = int(input(f'Elige un episodio ({ep_num}): '))
+            ep = int(input(f'Elige un episodio: '))
         except Exception as e:
             # Delete previous line
             CURSOR_UP_ONE = '\x1b[1A'
