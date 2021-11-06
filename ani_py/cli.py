@@ -6,17 +6,17 @@ import enquiries
 import subprocess
 from rich.console import Console
 from rich.theme import Theme
-
 from .servers import Jkanime
 
 
-custom_theme = Theme({
+CURSOR_UP_ONE = '\x1b[1A'
+ERASE_LINE = '\x1b[2K'
+
+console = Console(theme=Theme({
     'good': 'bold green',
     'bad': 'bold red',
     'warning': 'bold yellow'
-})
-
-console = Console(theme=custom_theme)
+}))
 
 
 def select_anime(anime_dict):
@@ -37,14 +37,10 @@ def select_ep(anime):
     while True:
         try:
             ep = int(input(f'Elige un episodio: '))
-        except Exception as e:
-            # Delete previous line
-            CURSOR_UP_ONE = '\x1b[1A'
-            ERASE_LINE = '\x1b[2K'
+            break
+        except Exception:
             print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
             continue
-        else:
-            break
     return ep
 
 
@@ -69,14 +65,17 @@ def download(link):
     if 'zippyshare' not in link:
         console.print(f'Descargalo en tu navegador => {link}', style="good")
     else:
-        if enquiries.confirm('¿Quieres descargar el episodio?'):
-            try:
-                extract_info(link)
-            except Exception as e:
-                raise
+        try:
+            extract_info(link)
+        except Exception:
+            print('Error de conección')
+            exit()
 
 
 def open_video_player(url):
+    """
+    Opens media player.
+    """
     option = f"--http-header-fields='Referer: {Jkanime().base_url}'"
     subprocess.run(['mpv', '--no-terminal', option, url])
 
@@ -91,7 +90,9 @@ def main(
     # Search for anime
     if anime is None:
         anime = input('Buscar Anime: ')
-    anime_dict = Jkanime().search_anime(anime)
+        print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
+    with console.status("[bold green]Buscando...") as status:
+        anime_dict = Jkanime().search_anime(anime)
     anime_info = select_anime(anime_dict)
 
     # Select episode
@@ -100,6 +101,7 @@ def main(
         episode = 'pelicula'
     elif episode is None:
         episode = select_ep(anime_info)
+        print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
 
     # Select mode
     if mode is None:
@@ -109,11 +111,14 @@ def main(
     if mode == 'Download' or mode is True:
         links = Jkanime().get_download_links(anime_info['slug'], episode)
         link = select_link(links)
+        print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
         download(link)
     # Stream
     else:
-        links = Jkanime().get_embedded_video_links(anime_info['slug'], episode)
-        link = Jkanime().get_video_link(links)
+        with console.status("[bold green]Obteniendo enlaces...") as status:
+            links = Jkanime().get_embedded_video_links(anime_info['slug'], episode)
+            link = Jkanime().get_video_link(links)
+        console.print("Abriendo video", style="bold green")
         open_video_player(link)
 
     console.print('Gracias por usar ani-py :cherry_blossom:', style="bold")
