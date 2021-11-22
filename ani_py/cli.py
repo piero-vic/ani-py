@@ -77,7 +77,7 @@ def open_video_player(url):
     Opens media player.
     """
     option = f"--http-header-fields='Referer: {Jkanime().base_url}'"
-    subprocess.run(['mpv', '--no-terminal', option, url])
+    subprocess.Popen(['mpv', '--no-terminal', option, url, '&'])
 
 
 def main(
